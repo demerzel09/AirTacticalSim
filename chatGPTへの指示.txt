@@ -1,0 +1,109 @@
+python で 現代のジェット戦闘機の飛行隊による戦術級の空中戦の戦術級ストラテジーゲームを作りたいです。
+・グラフィックは、線と点のようなものでよい。（1980年代の ミサイルコマンドというレトロゲームの見た目）
+・簡単なモデルでいいので、戦術的な要素はリアルにする。
+・航空機
+    - 速度, 加速度、機動性を考慮
+    - ミサイルの回避運動を実装する
+    - ミサイルは 4発装備
+・ミサイルのレーダー射程は 50mileで、ロックオンした飛行機に、飛んでいく
+・ミサイルの射程 最初の20秒間ロケットモーターで飛翔、あとは慣性飛行。慣性飛行で空気抵抗でエネルギーを失う状況をシミュレーションする
+・ミサイルの速度は、発射される飛行機の速度＋２０秒間のロケットモーターの加速で速度があがっていく。大体マッハ3～4
+・航空機はAIで動き、できるだけ敵を落としつづ、ミサイルを回避するように飛ぶ
+・ミサイルの射程範囲外 80マイルから、相対するように、マッハ0.8で接近し戦うという一般的な状況で配置
+
+以上の要素をベースにして実際に動くシミュレーションを作成してください。
+途中までは以下のようにプログラムを作成しましたので参考にしてください。
+
+
+-----------------------------------------------------------------------
+import pygame
+import sys
+import random
+
+class Aircraft:
+    def __init__(self, x, y, speed, acceleration, color):
+        self.x = x
+        self.y = y
+        self.speed = speed
+        self.acceleration = acceleration
+        self.color = color
+
+    def update(self):
+        self.speed += self.acceleration
+        self.x += self.speed
+        if self.x > 800:
+            self.x = 0
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), 5)
+
+
+# 飛行隊クラス
+class Squadron:
+    def __init__(self, color):
+        self.aircrafts = [Aircraft(random.randint(0, 800), random.randint(0, 600), random.uniform(1, 3), random.uniform(-0.1, 0.1), color) for _ in range(3)]
+
+    def update(self):
+        for aircraft in self.aircrafts:
+            aircraft.update()
+
+    def draw(self, screen):
+        for aircraft in self.aircrafts:
+            aircraft.draw(screen)
+
+
+
+class AircraftAI:
+    def __init__(self, aircraft):
+        self.aircraft = aircraft
+
+    def make_decision(self):
+        # 簡単なAIロジック
+        if self.aircraft.x < 400:
+            self.aircraft.acceleration = 1
+        else:
+            self.aircraft.acceleration = -1
+
+def main():
+    # 初期化
+    pygame.init()
+
+    # 画面サイズの設定
+    screen = pygame.display.set_mode((800, 600))
+    pygame.display.set_caption("Air Combat Strategy Game")
+
+    # 色の定義
+    WHITE = (255, 255, 255)
+    RED = (255, 0, 0)
+    BLUE = (0, 0, 255)
+
+    # 敵味方の飛行隊を作成
+    friendly_squadrons = [Squadron(BLUE) for _ in range(3)]
+    enemy_squadrons = [Squadron(RED) for _ in range(3)]
+
+    # ゲームループ
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        # 画面の更新
+        screen.fill(WHITE)
+
+        # 飛行隊の更新と描画
+        for squadron in friendly_squadrons:
+            squadron.update()
+            squadron.draw(screen)
+
+        for squadron in enemy_squadrons:
+            squadron.update()
+            squadron.draw(screen)
+
+        pygame.display.flip()
+
+    pygame.quit()
+    sys.exit()
+
+if __name__=="__main__":
+    main()
